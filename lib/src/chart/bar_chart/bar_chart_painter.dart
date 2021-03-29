@@ -486,7 +486,7 @@ class BarChartPainter extends AxisChartPainter<BarChartData> {
     final viewSize = canvasWrapper.size;
     final chartUsableSize = getChartUsableDrawSize(viewSize, holder);
 
-    const textsBelowMargin = 4;
+    const double textsBelowMargin = 0;
 
     final tooltipItem = tooltipData.getTooltipItem(
       showOnBarGroup,
@@ -499,10 +499,9 @@ class BarChartPainter extends AxisChartPainter<BarChartData> {
       return;
     }
 
-    final span = TextSpan(style: tooltipItem.textStyle, text: tooltipItem.text);
-    final tp = TextPainter(
-        text: span,
-        textAlign: tooltipItem.textAlign,
+    final TextPainter tp = TextPainter(
+        text: tooltipItem.text.text,
+        textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
         textScaleFactor: holder.textScale);
     tp.layout(maxWidth: tooltipData.maxContentWidth);
@@ -527,6 +526,7 @@ class BarChartPainter extends AxisChartPainter<BarChartData> {
       groupPositions[barGroupIndex].barsX[barRodIndex],
       getPixelY(showOnRodData.y, chartUsableSize, holder),
     );
+    final isPositive = showOnRodData.y > 0;
 
     final tooltipWidth = textWidth + tooltipData.tooltipPadding.horizontal;
     final tooltipHeight = textHeight + tooltipData.tooltipPadding.vertical;
@@ -541,9 +541,9 @@ class BarChartPainter extends AxisChartPainter<BarChartData> {
         : barBottomY + tooltipData.tooltipMargin;
 
     /// draw the background rect with rounded radius
-    // ignore: omit_local_variable_types
-    Rect rect =
-        Rect.fromLTWH(barOffset.dx - (tooltipWidth / 2), tooltipTop, tooltipWidth, tooltipHeight);
+
+    Rect rect = Rect.fromLTWH(barOffset.dx - (tooltipWidth / 2),
+        -(tooltipHeight + tooltipData.tooltipMargin), tooltipWidth, tooltipHeight);
 
     if (tooltipData.fitInsideHorizontally) {
       if (rect.left < 0) {
@@ -596,9 +596,16 @@ class BarChartPainter extends AxisChartPainter<BarChartData> {
     canvasWrapper.drawRRect(roundedRect, _bgTouchTooltipPaint);
 
     /// draw the texts one by one in below of each other
-    final top = tooltipData.tooltipPadding.top;
+
+    final double top = tooltipData.tooltipPadding.top;
+
+    double offsetLeft = barOffset.dx;
+    if (offsetLeft + tp.width > viewSize.width) {
+      offsetLeft = viewSize.width - tp.width;
+    }
+    print(rect.topLeft.dx);
     final drawOffset = Offset(
-      rect.center.dx - (tp.width / 2),
+      offsetLeft,
       rect.topCenter.dy + top,
     );
     canvasWrapper.drawText(tp, drawOffset);

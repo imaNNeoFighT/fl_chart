@@ -1200,12 +1200,9 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
     }
 
     /// draw the background rect with rounded radius
-    var rect = Rect.fromLTWH(
-      mostTopOffset.dx - (tooltipWidth / 2),
-      tooltipTopPosition,
-      tooltipWidth,
-      tooltipHeight,
-    );
+
+    Rect rect = Rect.fromLTWH(mostTopOffset.dx - (tooltipWidth / 2),
+        -(tooltipHeight + tooltipData.tooltipMargin), tooltipWidth, tooltipHeight);
 
     if (tooltipData.fitInsideHorizontally) {
       if (rect.left < 0) {
@@ -1258,10 +1255,17 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
     canvasWrapper.drawRRect(roundedRect, _bgTouchTooltipPaint);
 
     /// draw the texts one by one in below of each other
-    var topPosSeek = tooltipData.tooltipPadding.top;
-    for (var tp in drawingTextPainters) {
+
+    double topPosSeek = tooltipData.tooltipPadding.top;
+
+    for (TextPainter tp in drawingTextPainters) {
+      double offsetLeft = mostTopOffset.dx;
+      if (offsetLeft + tp.width > viewSize.width) {
+        offsetLeft = viewSize.width - tp.width;
+      }
+
       final drawOffset = Offset(
-        rect.center.dx - (tp.width / 2),
+        offsetLeft,
         rect.topCenter.dy + topPosSeek,
       );
       canvasWrapper.drawText(tp, drawOffset);
