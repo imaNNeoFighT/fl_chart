@@ -9,6 +9,13 @@ import 'package:fl_chart/src/chart/radar_chart/radar_extension.dart';
 
 typedef GetTitleByIndexFunction = String Function(int index);
 
+typedef GetTickTitleFunction = String Function(int index, double tick);
+
+typedef GetTitleAngleByIndexFunction = double Function(double angle, int index);
+
+String _defaultGetTickTitle(int index, double tick) => tick.toStringAsFixed(1);
+double _defaultTitleAngle(double angle, int index) => angle * index;
+
 /// [RadarChart] needs this class to render itself.
 ///
 /// It holds data needed to draw a radar chart,
@@ -70,6 +77,32 @@ class RadarChartData extends BaseChartData with EquatableMixin {
   /// Handles touch behaviors and responses.
   final RadarTouchData radarTouchData;
 
+  /// Defines a rotation angle of the title outside of [RadarChart]
+  final GetTitleAngleByIndexFunction titleAngle;
+
+  /// [getTickTitle] is used to draw tick titles
+  /// [getTickTitle] is type of [GetTickTitleFunction] so you should return a valid [String]
+  /// for each
+  ///
+  /// ```dart
+  /// getTickTitle: (index, tick) {
+  ///   switch (index) {
+  ///     case 0:
+  ///       return 'Low';
+  ///     case 2:
+  ///       return 'Normal';
+  ///     case 1:
+  ///       return 'High';
+  ///     default:
+  ///       return '';
+  ///   }
+  /// }
+  /// ```
+  final GetTickTitleFunction getTickTitle;
+
+  /// It's triggered when title that is drawn outside the [RadarChart] is pressed
+  final Function(String)? onTitleTap;
+
   /// [titleCount] we use this value to determine number of [RadarChart] grid or lines.
   int get titleCount => dataSets[0].dataEntries.length;
 
@@ -128,6 +161,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
     BorderSide? gridBorderData,
     RadarTouchData? radarTouchData,
     FlBorderData? borderData,
+    GetTitleAngleByIndexFunction? titleAngle,
+    String Function(int, double)? getTickTitle,
+    Function(String)? onTitleTap,
   })  : assert(dataSets != null && dataSets.hasEqualDataEntriesLength),
         assert(tickCount == null || tickCount >= 1, "RadarChart need's at least 1 tick"),
         assert(
@@ -146,6 +182,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
         ticksTextStyle = ticksTextStyle ?? const TextStyle(fontSize: 10, color: Colors.black),
         tickBorderData = tickBorderData ?? const BorderSide(color: Colors.black, width: 2),
         gridBorderData = gridBorderData ?? const BorderSide(color: Colors.black, width: 2),
+        titleAngle = titleAngle ?? _defaultTitleAngle,
+        getTickTitle = getTickTitle ?? _defaultGetTickTitle,
+        onTitleTap = onTitleTap,
         super(borderData: borderData, touchData: radarTouchData ?? RadarTouchData());
 
   /// Copies current [RadarChartData] to a new [RadarChartData],
@@ -163,6 +202,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
     BorderSide? gridBorderData,
     RadarTouchData? radarTouchData,
     FlBorderData? borderData,
+    GetTitleAngleByIndexFunction? titleAngle,
+    GetTickTitleFunction? getTickTitle,
+    Function(String)? onTitleTap,
   }) =>
       RadarChartData(
         dataSets: dataSets ?? this.dataSets,
@@ -178,6 +220,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
         gridBorderData: gridBorderData ?? this.gridBorderData,
         radarTouchData: radarTouchData ?? this.radarTouchData,
         borderData: borderData ?? this.borderData,
+        titleAngle: titleAngle ?? this.titleAngle,
+        getTickTitle: getTickTitle ?? this.getTickTitle,
+        onTitleTap: onTitleTap ?? this.onTitleTap,
       );
 
   /// Lerps a [BaseChartData] based on [t] value, check [Tween.lerp].
@@ -188,6 +233,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
         dataSets: lerpRadarDataSetList(a.dataSets, b.dataSets, t),
         radarBackgroundColor: Color.lerp(a.radarBackgroundColor, b.radarBackgroundColor, t),
         getTitle: b.getTitle,
+        titleAngle: b.titleAngle,
+        getTickTitle: b.getTickTitle,
+        onTitleTap: b.onTitleTap,
         titleTextStyle: TextStyle.lerp(a.titleTextStyle, b.titleTextStyle, t),
         titlePositionPercentageOffset: lerpDouble(
           a.titlePositionPercentageOffset,
@@ -223,6 +271,9 @@ class RadarChartData extends BaseChartData with EquatableMixin {
         tickBorderData,
         gridBorderData,
         radarTouchData,
+        titleAngle,
+        getTickTitle,
+        onTitleTap,
       ];
 }
 
