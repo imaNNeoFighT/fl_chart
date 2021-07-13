@@ -1420,8 +1420,12 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
   }
 
   /// find the nearest spot base on the touched offset
-  LineBarSpot? _getNearestTouchedSpot(Size viewSize, Offset touchedPoint, LineChartBarData barData,
-      int barDataPosition, PaintHolder<LineChartData> holder) {
+  LineBarSpot? _getNearestTouchedSpot(
+      Size viewSize,
+      Offset touchedPoint,
+      LineChartBarData barData,
+      int barDataPosition,
+      PaintHolder<LineChartData> holder) {
     final data = holder.data;
     if (!barData.show) {
       return null;
@@ -1429,17 +1433,31 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
 
     final chartViewSize = getChartUsableDrawSize(viewSize, holder);
 
-    /// Find the nearest spot (on X axis)
-    for (var i = 0; i < barData.spots.length; i++) {
-      final spot = barData.spots[i];
-      if (spot.isNotNull()) {
-        if ((touchedPoint.dx - getPixelX(spot.x, chartViewSize, holder)).abs() <=
-            data.lineTouchData.touchSpotThreshold) {
-          return LineBarSpot(barData, barDataPosition, spot);
+    final sortedSpots = <FlSpot>[];
+    double? smallestDistance;
+
+    for (var e in barData.spots) {
+      if (e.isNull()) continue;
+
+      final distance =
+          (touchedPoint.dx - getPixelX(e.x, chartViewSize, holder)).abs();
+
+      if (distance <= data.lineTouchData.touchSpotThreshold) {
+        smallestDistance ??= distance;
+
+        if (distance < smallestDistance) {
+          sortedSpots.insert(0, e);
+          smallestDistance = distance;
+        } else {
+          sortedSpots.add(e);
         }
       }
     }
 
-    return null;
+    if (sortedSpots.isNotEmpty) {
+      return LineBarSpot(barData, barDataPosition, sortedSpots.first);
+    } else {
+      return null;
+    }
   }
 }
